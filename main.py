@@ -1,44 +1,95 @@
 # main.py
 import pygame
+import random
 import config
-from enemy import Enemy
-from tower import Tower  
+from enemy import StandardEnemy, FastEnemy, TankEnemy
+from tower import Tower
 
 pygame.init()
 screen = pygame.display.set_mode((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
 pygame.display.set_caption("Tesi Tower Defense - Motore di Gioco")
 clock = pygame.time.Clock()
+font = pygame.font.SysFont(None, 36) # Font per i testi a schermo
+
+# --- STATO DEL GIOCO ---
 running = True
+oro_giocatore = 150  # Soldi iniziali (bastano per 3 torri base)
+vite_giocatore = 10
 
 # Waypoints
 # Definisce strada dei nemici
-percorso_di_prova = [(0, 300), (400, 300), (400, 500)]
-punto_di_partenza = percorso_di_prova[0]
+percorso = [(0, 100), (400, 100), (400, 300), (200, 300), (200, 500), (800, 500)]
+punto_partenza = percorso[0]
 
-# nemico di test
-test_enemy = Enemy(start_pos=punto_di_partenza, waypoints=percorso_di_prova)
+# Liste che conterranno tutte le nostre entità
+enemies = []
+towers = []
 
-# Torre al centro dello schermo
-test_tower = Tower(config.SCREEN_WIDTH // 2 - 20, config.SCREEN_HEIGHT // 2 - 20)
+# Timer per generare un nemico ogni 1.5 secondi
+SPAWN_EVENT = pygame.USEREVENT + 1
+pygame.time.set_timer(SPAWN_EVENT, 1500)
 
 while running:
     # Fase 1: Input
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-
+        # Generazione casuale dei nemici
+        elif event.type == SPAWN_EVENT:
+            # Sceglie a caso quale dei 3 nemici spawnare
+            TipoNemico = random.choice([StandardEnemy, FastEnemy, TankEnemy])
+            enemies.append(TipoNemico(start_pos=punto_partenza, waypoints=percorso))
+            
+        # Gestione Mouse (Piazzamento e Upgrade Torri)
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1: # Click sinistro
+                mouse_pos = pygame.mouse.get_pos()
+                torre_cliccata = False
+                
+                # 1. Controlla se abbiamo cliccato su una torre già esistente (Upgrade)
+                for tower in towers:
+                    if tower.rect.collidepoint(mouse_pos):
+                        torre_cliccata = True
+                        if oro_giocatore >= tower.upgrade_cost:
+                            oro_giocatore -= tower.upgrade_cost
+                            tower.upgrade()
+                        break
+                
+                # 2. Se abbiamo cliccato sul vuoto, prova a comprare una nuova torre
+                if not torre_cliccata:
+                    if oro_giocatore >= config.TOWER_COST:
+                        oro_giocatore -= config.TOWER_COST
+                        towers.append(Tower(mouse_pos[0], mouse_pos[1]))
     # Fase 2: Update
-    test_enemy.update()
-    
-    # Controllo se il nemico è morto
-    if test_enemy.health <= 0:
-        test_enemy = Enemy(start_pos=punto_di_partenza, waypoints=percorso_di_prova)
+    for enemy in enemies:
+        enemy.update()
+
+        # Controllo se il nemico è morto
+        if enemy.health <= 0:
+                oro_giocatore += enemy.reward
+                enemies.remove(enemy)
+        # Il nemico ha raggiunto la fine del percorso?
+        elif enemy.current_waypoint_index >= len(enemy.waypoints):
+            vite_giocatore -= 1
+            enemies.remove(enemy)
 
     # Fase 3: Rendering 
     screen.fill(config.BLACK)
     
-    test_tower.draw(screen, test_enemy)  # Disegna prima la torre +  il suo raggio
-    test_enemy.draw(screen)  # Poi disegna il nemico
+    # Disegna il sentiero (una linea grigia spessa sotto tutto)
+    pygame.draw.lines(screen, config.DARK_GRAY, False, percorso, 40)
+
+    # Disegna torri (le torri ricevono la lista 'enemies' per cercare bersagli)
+    for tower in towers:
+        tower.draw(screen, enemies)
+
+    # Disegna nemici
+    for enemy in enemies:
+        enemy.draw(screen)
+
+    # Interfaccia Utente (UI) in alto a sinistra
+    ui_testo = font.render(f"Oro: {oro_giocatore} | Vite: {vite_giocatore} | Costo Torre: {config.TOWER_COST}", True, config.WHITE)
+    screen.blit(ui_testo, (10, 10))
     
     pygame.display.flip()
 
