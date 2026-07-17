@@ -1,5 +1,4 @@
-# config.py
-# Modulo di configurazione per Tesi Tower Defense
+# Modulo di configurazione   per Tesi Tower Defense
 
 # Dimensioni Schermo
 SCREEN_WIDTH = 800
@@ -15,6 +14,7 @@ RED   = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE  = (0, 0, 255)
 
-# Game Balance (Esempi)
+# Game Balance 
 ENEMY_SPEED = 2
 TOWER_RANGE = 150
+

@@ -2,7 +2,7 @@
 import pygame
 import config
 from enemy import Enemy
-from tower import Tower  # NUOVO: Importiamo la torre
+from tower import Tower  
 
 pygame.init()
 screen = pygame.display.set_mode((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
@@ -10,30 +10,41 @@ pygame.display.set_caption("Tesi Tower Defense - Motore di Gioco")
 clock = pygame.time.Clock()
 running = True
 
-# Creazione delle istanze (Entità del gioco)
-test_enemy = Enemy()
-# NUOVO: Posizioniamo la torre al centro dello schermo
+# Waypoints
+# Definisce strada dei nemici
+percorso_di_prova = [(0, 300), (400, 300), (400, 500)]
+punto_di_partenza = percorso_di_prova[0]
+
+# nemico di test
+test_enemy = Enemy(start_pos=punto_di_partenza, waypoints=percorso_di_prova)
+
+# Torre al centro dello schermo
 test_tower = Tower(config.SCREEN_WIDTH // 2 - 20, config.SCREEN_HEIGHT // 2 - 20)
 
 while running:
-    # A. Input Handling
+    # Fase 1: Input
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
-    # B. Update (Logica del gioco)
+    # Fase 2: Update
     test_enemy.update()
+    
+    # Controllo se il nemico è morto
+    if test_enemy.health <= 0:
+        test_enemy = Enemy(start_pos=punto_di_partenza, waypoints=percorso_di_prova)
 
-    # C. Rendering (Disegno a schermo)
+    # Fase 3: Rendering 
     screen.fill(config.BLACK)
     
-    # L'ordine di rendering è importante (chi viene disegnato per ultimo sta "sopra")
-    test_tower.draw(screen, test_enemy)  # NUOVO: Disegna prima la torre (e il suo raggio)
+    test_tower.draw(screen, test_enemy)  # Disegna prima la torre +  il suo raggio
     test_enemy.draw(screen)  # Poi disegna il nemico
     
     pygame.display.flip()
 
-    # D. Sincronizzazione (Clock)
+    # Gestione FPS 
     clock.tick(config.FPS)
 
 pygame.quit()
+
+
