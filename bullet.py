@@ -4,39 +4,45 @@ import config
 from pygame.math import Vector2
 
 class Bullet:
-    def __init__(self, x, y, target, damage):
+    def __init__(self, x, y, target, damage, level=1):
         self.pos = Vector2(x, y)
         self.target = target
         self.damage = damage
-        self.speed = config.BULLET_SPEED
-        self.radius = config.BULLET_SIZE
-        self.color = config.YELLOW
+        self.level = level
+        
+        # Caratteristiche del proiettile scalate in base al livello della torre
+        if self.level == 1:
+            self.speed = config.BULLET_SPEED
+            self.radius = 5
+            self.color = config.YELLOW
+        elif self.level == 2:
+            self.speed = config.BULLET_SPEED + 2      # Più veloce
+            self.radius = 7                           # Più grande
+            self.color = (255, 140, 0)                # Arancione brillante
+        else: # Livello 3 e successivi
+            self.speed = config.BULLET_SPEED + 4      # Molto veloce
+            self.radius = 9                           # Grande
+            self.color = (0, 255, 255)                # Ciano energetico
 
     def update(self, enemies_list):
         """
         Aggiorna la posizione del proiettile verso il bersaglio.
-        Ritorna True se il proiettile ha colpito il bersaglio o se il bersaglio non esiste più.
+        Ritorna True se ha colpito o se il bersaglio non esiste più.
         """
-        # Se il nemico è stato già eliminato o rimosso dalla lista
         if self.target not in enemies_list or self.target.health <= 0:
-            return True # Segnale di rimozione
+            return True
 
-        # Coordinate attuali del centro del nemico bersaglio
         target_pos = Vector2(self.target.rect.centerx, self.target.rect.centery)
-        
-        # Vettore direzione e distanza
         direzione = target_pos - self.pos
         distanza = direzione.length()
 
-        # Controllo collisione (se la distanza è inferiore allo spostamento in un frame)
         if distanza <= self.speed:
-            self.target.health -= self.damage # Applica il danno al nemico
-            return True # Segnale di rimozione (colpo andato a segno)
+            self.target.health -= self.damage
+            return True
         else:
-            # Movimento vettoriale normalizzato verso il target
             direzione_normalizzata = direzione.normalize()
             self.pos += direzione_normalizzata * self.speed
-            return False # Il proiettile continua a viaggiare
+            return False
 
     def draw(self, screen):
         """Disegna il proiettile a schermo."""

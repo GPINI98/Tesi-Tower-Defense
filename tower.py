@@ -57,10 +57,12 @@ class Tower:
                     closest_enemy = enemy
 
         # Se troviamo un bersaglio valido e la torre ha ricaricato, spara (crea proiettile)
+        # Se troviamo un bersaglio valido e la torre ha ricaricato, spara
         if closest_enemy and self.cooldown_timer == 0:
-            new_bullet = Bullet(center_x, center_y, closest_enemy, self.damage)
+            # Passiamo self.level al proiettile
+            new_bullet = Bullet(center_x, center_y, closest_enemy, self.damage, self.level)
             bullets_list.append(new_bullet)
-            self.cooldown_timer = self.cooldown_max # Resetta il cooldown
+            self.cooldown_timer = self.cooldown_max
 
     def draw(self, screen):
         """Disegna unicamente gli elementi grafici della torretta"""
