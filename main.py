@@ -19,26 +19,38 @@ game_over = False
 oro_giocatore = 150  # Soldi iniziali
 vite_giocatore = 10
 
+# --- GESTIONE ONDATE (WAVES) ---
+onda_corrente = 1
+nemici_totali_onda = 5      # Quanti nemici compongono la prima ondata
+nemici_spawnati_onda = 0    # Contatore dei nemici già generati nell'ondata corrente
+pausa_tra_ondate = False
+timer_pausa = 0
+
 # Liste delle entità di gioco
 enemies = []
 towers = []
-bullets = []  # Lista che gestisce i proiettili attivi (Capitolo 3)
+bullets = []
 
-# Timer per generare un nemico ogni 1.5 secondi
+# Timer per generare un nemico a intervalli regolari (ogni 1.5 secondi)
 SPAWN_EVENT = pygame.USEREVENT + 1
 pygame.time.set_timer(SPAWN_EVENT, 1500)
 
 while running:
+    current_time = pygame.time.get_ticks()
+
     # FASE 1: INPUT
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
             
-        # Generazione casuale dei nemici
-        elif event.type == SPAWN_EVENT and not game_over:
-            TipoNemico = random.choice([StandardEnemy, FastEnemy, TankEnemy])
-            percorso_scelto = random.choice(percorsi)
-            enemies.append(TipoNemico(start_pos=percorso_scelto[0], waypoints=percorso_scelto))
+        # Generazione nemici controllata dal sistema a ondate
+        elif event.type == SPAWN_EVENT and not game_over and not pausa_tra_ondate:
+            # Se ci sono ancora nemici da spawnare in questa ondata
+            if nemici_spawnati_onda < nemici_totali_onda:
+                TipoNemico = random.choice([StandardEnemy, FastEnemy, TankEnemy])
+                percorso_scelto = random.choice(percorsi)
+                enemies.append(TipoNemico(start_pos=percorso_scelto[0], waypoints=percorso_scelto))
+                nemici_spawnati_onda += 1
             
         # Gestione Mouse (Piazzamento e Upgrade Torri)
         elif event.type == pygame.MOUSEBUTTONDOWN and not game_over:
@@ -79,14 +91,29 @@ while running:
                 if vite_giocatore <= 0:
                     game_over = True
 
-        # Aggiornamento torri (passando nemici e lista proiettili)
+        # Aggiornamento torri
         for tower in towers:
             tower.update(enemies, bullets)
 
-        # Aggiornamento proiettili (ciclo con copia per rimozione sicura)
+        # Aggiornamento proiettili
         for bullet in bullets[:]:
             if bullet.update(enemies):
                 bullets.remove(bullet)
+
+        # --- LOGICA DI TRANSIZIONE ONDATE ---
+        # Condizione di fine ondata: abbiamo spawnato tutti i nemici dell'onda E non ce ne sono più attivi a schermo
+        if nemici_spawnati_onda >= nemici_totali_onda and len(enemies) == 0:
+            if not pausa_tra_ondate:
+                pausa_tra_ondate = True
+                timer_pausa = current_time # Registra l'inizio della pausa
+                oro_giocatore += 50 * onda_corrente # Bonus in oro per aver completato l'ondata
+            
+            # Aspetta 3 secondi (3000 ms) prima di far partire l'ondata successiva
+            elif current_time - timer_pausa >= 3000:
+                onda_corrente += 1
+                nemici_totali_onda += 4  # Aumenta la difficoltà aggiungendo 4 nemici in più per la prossima onda
+                nemici_spawnati_onda = 0 # Resetta il contatore di spawn
+                pausa_tra_ondate = False
 
     # FASE 3: RENDERING 
     screen.fill(config.BLACK)
@@ -107,9 +134,28 @@ while running:
     for bullet in bullets:
         bullet.draw(screen)
 
-    # 5. Interfaccia Utente (UI) in alto a sinistra
-    ui_testo = font.render(f"Oro: {oro_giocatore} | Vite: {vite_giocatore} | Costo Torre: {config.TOWER_COST}", True, config.WHITE)
+    # 5. Interfaccia Utente (UI) con indicazione dell'Onda
+    ui_testo = font.render(
+        f"Onda: {onda_corrente} | Oro: {oro_giocatore} | Vite: {vite_giocatore} | Costo Torre: {config.TOWER_COST}", 
+        True, 
+        config.WHITE
+    )
     screen.blit(ui_testo, (10, 10))
+
+# Messaggio visivo dinamico con conto alla rovescia durante la pausa tra le ondate
+    if pausa_tra_ondate and not game_over:
+        # Calcoliamo i millisecondi trascorsi dall'inizio della pausa
+        tempo_trascorso = current_time - timer_pausa
+        tempo_rimanente_ms = max(0, 3000 - tempo_trascorso)  # 3000 ms = 3 secondi di pausa
+        secondi_rimanenti = int(tempo_rimanente_ms / 1000) + 1  # Arrotonda per eccesso per mostrare da 3 a 1
+
+        testo_pausa = font.render(
+            f"Onda {onda_corrente - 1} completata! Prossima onda tra: {secondi_rimanenti}s", 
+            True, 
+            config.YELLOW
+        )
+        rect_pausa = testo_pausa.get_rect(center=(config.SCREEN_WIDTH // 2, 60))
+        screen.blit(testo_pausa, rect_pausa)
 
     # 6. Gestione schermata Game Over
     if game_over:
