@@ -42,17 +42,27 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-            
+
         # Generazione nemici controllata dal sistema a ondate
         elif event.type == SPAWN_EVENT and not game_over and not pausa_tra_ondate:
+            # Inizia a generare nemici solo dopo che sono trascorsi 5 secondi dall'avvio
+            if current_time >= 5000:
+                if nemici_spawnati_onda < nemici_totali_onda:
+                    TipoNemico = random.choice([StandardEnemy, FastEnemy, TankEnemy])
+                    percorso_scelto = random.choice(percorsi)
+                    enemies.append(TipoNemico(start_pos=percorso_scelto[0], waypoints=percorso_scelto))
+                    nemici_spawnati_onda += 1
+
+        # Generazione nemici controllata dal sistema a ondate
+       # elif event.type == SPAWN_EVENT and not game_over and not pausa_tra_ondate:
             # Se ci sono ancora nemici da spawnare in questa ondata
-            if nemici_spawnati_onda < nemici_totali_onda:
-                TipoNemico = random.choice([StandardEnemy, FastEnemy, TankEnemy])
-                percorso_scelto = random.choice(percorsi)
-                enemies.append(TipoNemico(start_pos=percorso_scelto[0], waypoints=percorso_scelto))
-                nemici_spawnati_onda += 1
+           # if nemici_spawnati_onda < nemici_totali_onda:
+               # TipoNemico = random.choice([StandardEnemy, FastEnemy, TankEnemy])
+               # percorso_scelto = random.choice(percorsi)
+               # enemies.append(TipoNemico(start_pos=percorso_scelto[0], waypoints=percorso_scelto))
+               # nemici_spawnati_onda += 1
             
-        # Gestione Mouse (Piazzamento e Upgrade Torri)
+# Gestione Mouse (Piazzamento e Upgrade Torri)
         elif event.type == pygame.MOUSEBUTTONDOWN and not game_over:
             if event.button == 1: # Click sinistro
                 mouse_pos = pygame.mouse.get_pos()
@@ -67,11 +77,28 @@ while running:
                             tower.upgrade()
                         break
                 
-                # 2. Se abbiamo cliccato sul vuoto, prova a comprare una nuova torre
+                # 2. Se abbiamo cliccato sul vuoto, prova a comprare una nuova torre (SISTEMA A GRIGLIA)
                 if not torre_cliccata:
-                    if oro_giocatore >= config.TOWER_COST:
+                    CELL_SIZE = 40 # Dimensione fissa della cella (la torre è 40x40)
+                    
+                    # Discretizzazione: converte la posizione del mouse nel centro della cella di griglia
+                    grid_x = (mouse_pos[0] // CELL_SIZE) * CELL_SIZE + (CELL_SIZE // 2)
+                    grid_y = (mouse_pos[1] // CELL_SIZE) * CELL_SIZE + (CELL_SIZE // 2)
+                    
+                    # Crea un rect provvisorio per verificare le collisioni prima di piazzare
+                    new_rect = pygame.Rect(grid_x - CELL_SIZE//2, grid_y - CELL_SIZE//2, CELL_SIZE, CELL_SIZE)
+                    
+                    # Verifica che la cella non sia già occupata da un'altra torre
+                    cella_occupata = False
+                    for tower in towers:
+                        if tower.rect.colliderect(new_rect):
+                            cella_occupata = True
+                            break
+                    
+                    # Se la cella è libera e ci sono i soldi, piazza la torre allineata alla griglia
+                    if not cella_occupata and oro_giocatore >= config.TOWER_COST:
                         oro_giocatore -= config.TOWER_COST
-                        towers.append(Tower(mouse_pos[0], mouse_pos[1]))
+                        towers.append(Tower(grid_x, grid_y))
 
     # FASE 2: UPDATE (Logica di Gioco)
     if not game_over:
@@ -117,7 +144,21 @@ while running:
 
     # FASE 3: RENDERING 
     screen.fill(config.BLACK)
-    
+ ########################################################################à   
+# --- CODICE TEMPORANEO PER SCREENSHOT GRIGLIA ---
+    CELL_SIZE = 40
+    COLORE_GRIGLIA = (50, 50, 50)
+
+    # Linee verticali
+    for x in range(0, config.SCREEN_WIDTH, CELL_SIZE):
+        pygame.draw.line(screen, COLORE_GRIGLIA, (x, 0), (x, config.SCREEN_HEIGHT), 1)
+
+    # Linee orizzontali
+    for y in range(0, config.SCREEN_HEIGHT, CELL_SIZE):
+        pygame.draw.line(screen, COLORE_GRIGLIA, (0, y), (config.SCREEN_WIDTH, y), 1)
+    # ------------------------------------------------
+##############################################################################
+
     # 1. Disegna i sentieri
     for p in percorsi:
         pygame.draw.lines(screen, config.DARK_GRAY, False, p, 40)

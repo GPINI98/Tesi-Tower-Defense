@@ -51,7 +51,7 @@ class Tower:
                 enemy_cy = enemy.rect.centery
                 distanza = math.hypot(enemy_cx - center_x, enemy_cy - center_y)
                 
-                # Se il nemico è nel raggio d'azione ed è il più vicino trovato finora
+                # Se il nemico è nel raggio d'azione ed è il più vicino 
                 if distanza <= self.range and distanza < min_distance:
                     min_distance = distanza
                     closest_enemy = enemy
