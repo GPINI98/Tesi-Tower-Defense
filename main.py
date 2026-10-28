@@ -53,15 +53,6 @@ while running:
                     enemies.append(TipoNemico(start_pos=percorso_scelto[0], waypoints=percorso_scelto))
                     nemici_spawnati_onda += 1
 
-        # Generazione nemici controllata dal sistema a ondate
-       # elif event.type == SPAWN_EVENT and not game_over and not pausa_tra_ondate:
-            # Se ci sono ancora nemici da spawnare in questa ondata
-           # if nemici_spawnati_onda < nemici_totali_onda:
-               # TipoNemico = random.choice([StandardEnemy, FastEnemy, TankEnemy])
-               # percorso_scelto = random.choice(percorsi)
-               # enemies.append(TipoNemico(start_pos=percorso_scelto[0], waypoints=percorso_scelto))
-               # nemici_spawnati_onda += 1
-            
 # Gestione Mouse (Piazzamento e Upgrade Torri)
         elif event.type == pygame.MOUSEBUTTONDOWN and not game_over:
             if event.button == 1: # Click sinistro
@@ -144,20 +135,6 @@ while running:
 
     # FASE 3: RENDERING 
     screen.fill(config.BLACK)
- ########################################################################à   
-# --- CODICE TEMPORANEO PER SCREENSHOT GRIGLIA ---
-    CELL_SIZE = 40
-    COLORE_GRIGLIA = (50, 50, 50)
-
-    # Linee verticali
-    for x in range(0, config.SCREEN_WIDTH, CELL_SIZE):
-        pygame.draw.line(screen, COLORE_GRIGLIA, (x, 0), (x, config.SCREEN_HEIGHT), 1)
-
-    # Linee orizzontali
-    for y in range(0, config.SCREEN_HEIGHT, CELL_SIZE):
-        pygame.draw.line(screen, COLORE_GRIGLIA, (0, y), (config.SCREEN_WIDTH, y), 1)
-    # ------------------------------------------------
-##############################################################################
 
     # 1. Disegna i sentieri
     for p in percorsi:
