@@ -51,7 +51,7 @@ Lo sviluppo è stato un'occasione per applicare concetti di programmazione orien
 3. Installare Pygame:
 
    ```bash
-   python -m pip install pygame
+   python -m pip install requirements.txt
    ```
 
 4. Avviare il gioco:
