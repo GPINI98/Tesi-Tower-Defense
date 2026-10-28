@@ -59,9 +59,7 @@ Lo sviluppo è stato un'occasione per applicare concetti di programmazione orien
    ```bash
    python main.py
    ```
-
-I comandi di installazione e avvio devono essere verificati nell'ambiente di destinazione prima di considerare le istruzioni definitive.
-
+   
 ## Obiettivi del progetto
 
 Il progetto ha permesso di approfondire la programmazione orientata agli oggetti, la gestione del movimento tramite vettori, l'interazione tra diversi componenti del gioco e l'organizzazione del codice in moduli distinti.
